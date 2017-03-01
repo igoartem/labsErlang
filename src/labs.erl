@@ -1,21 +1,14 @@
-%%%-------------------------------------------------------------------
-%%% @author artoy
-%%% @copyright (C) 2017, <COMPANY>
-%%% @doc
-%%%
-%%% @end
-%%% Created : 18. Февр. 2017 13:37
-%%%-------------------------------------------------------------------
--module('Lab1').
--author("artoy").
+-module(labs).
+-author("artem").
 
 %% API
--export([main/0, lab1/1, lab2/0]).
+-export([main/0, lab1/1, lab2/0, startTaxi/2, startLaundry/1, startRestorant/1, startManager/2, startClient/3,pinpong/0]).
 
 div2([]) -> [];
 div2([H | T]) -> [H / 2 | div2(T)].
 
-main() -> lab2().
+main() -> lab2(),
+  timer:sleep(300000).
 %%main()-> pinpong().
 %%main()-> lab1([minus, [multi, [plus, [divis, 4, 2], 5], 2], 10]).
 
@@ -30,7 +23,8 @@ lab1(A) -> A.
 
 print(S) -> erlang:display(S).
 
-pinpong() -> spawn(fun() -> ping(spawn(fun() -> pong() end)) end).
+%%pinpong() -> spawn(fun() -> ping(spawn(fun() -> pong() end)) end).
+pinpong() -> spawn(fun() -> ping(spawn('ssssssss',proc, pong,[])) end).
 
 ping(PidPong) ->
   io:format("Ping ~w ~w ~n", [PidPong, self()]),
@@ -62,6 +56,7 @@ clientStart(PidManager, PidRestorant) ->
   end.
 
 client(PidManager, PidRestorant) ->
+  timer:sleep(1000),
   Rand = rand:uniform(4),
   io:format("Client ask: ~w ~n", [Rand]),
   if
@@ -158,3 +153,49 @@ lab2() ->
   PidManager = spawn(fun() -> manager(PidLaundry, PidTaxi) end),
   PidRestorant = spawn(fun() -> restorant() end),
   PidClient = spawn(fun() -> clientStart(PidManager, PidRestorant) end).
+
+ping(_, pong) -> ok;
+ping(Name, _) ->
+  erlang:display(bred),
+  timer:sleep(1000),
+  ping(Name, net_adm:ping(Name)).
+
+startTaxi(ClientNodeName, ManagerNodeName) ->
+  global:register_name(taxi, self()),
+  Nammm = global:registered_names(),
+  io:format("~w ~n", [Nammm]),
+  io:format("~w ~n", [self()]),
+  ping(ClientNodeName, pang),
+  ping(ManagerNodeName, pang),
+  taxi().
+
+startLaundry(ManagerNodeName) ->
+  global:register_name(laundry, self()),
+  Nammm = global:registered_names(),
+  io:format("~w ~n", [Nammm]),
+  io:format("~w ~n", [self()]),
+  ping(ManagerNodeName, pang),
+  laundry().
+
+startRestorant(ClientNodeName) ->
+  global:register_name(restorant, self()),
+  ping(ClientNodeName, pang),
+  restorant().
+
+startManager(TaxiNodeName, LaundryNodeName) ->
+  global:register_name(manager, self()),
+  ping(TaxiNodeName, pang),
+  ping(LaundryNodeName, pang),
+  PidLaundry = global:whereis_name(laundry),
+  PidTaxi = global:whereis_name(taxi),
+  manager(PidLaundry, PidTaxi).
+
+startClient(ManagerNodeName, RestorantNodeName, TaxiNodeName) ->
+  global:register_name(client, self()),
+  ping(ManagerNodeName, pang),
+  ping(RestorantNodeName, pang),
+  ping(TaxiNodeName, pang),
+  PidManager = global:whereis_name(manager),
+  PidRestorant = global:whereis_name(restorant),
+  clientStart(PidManager, PidRestorant).
+
